@@ -198,7 +198,7 @@ class AgentLoop @Inject constructor(
                 }
 
                 // Check approval
-                val approved = checkApproval(call.name, call.input)
+                val approved = checkApproval(tool, call.input)
                 if (!approved) {
                     toolResults.add(ContentBlock.ToolResult(
                         call.id, "Tool execution denied by user", isError = true
@@ -258,23 +258,27 @@ class AgentLoop @Inject constructor(
         }
     }
 
-    private suspend fun checkApproval(toolName: String, params: JsonObject): Boolean {
+    private suspend fun checkApproval(tool: Tool, params: JsonObject): Boolean {
+        val toolName = tool.name
         val policy = autonomyPolicy.getPolicy(toolName)
+        if (policy == ToolApprovalPolicy.DENY) return false
+        if (tool.requiresApproval) return requestApproval(toolName, params)
         return when (policy) {
             ToolApprovalPolicy.AUTO -> true
+            ToolApprovalPolicy.ASK -> requestApproval(toolName, params)
             ToolApprovalPolicy.DENY -> false
-            ToolApprovalPolicy.ASK -> {
-                _state.value = AgentState.WAITING_APPROVAL
-                val request = ApprovalRequest(
-                    toolName = toolName,
-                    parameters = params,
-                    description = "Allow $toolName?"
-                )
-                val result = approvalQueue.request(request)
-                _state.value = AgentState.EXECUTING_TOOLS
-                result == ApprovalResult.APPROVED
-            }
         }
+    }
+    private suspend fun requestApproval(toolName: String, params: JsonObject): Boolean {
+        _state.value = AgentState.WAITING_APPROVAL
+        val request = ApprovalRequest(
+            toolName = toolName,
+            parameters = params,
+            description = "Allow $toolName?"
+        )
+        val result = approvalQueue.request(request)
+        _state.value = AgentState.EXECUTING_TOOLS
+        return result == ApprovalResult.APPROVED
     }
 
     fun loadHistory() {

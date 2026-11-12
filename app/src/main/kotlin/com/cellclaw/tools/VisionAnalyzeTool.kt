@@ -24,7 +24,7 @@ Useful for understanding screenshots, photos, or any visual content."""
         ),
         required = listOf("file_path", "question")
     )
-    override val requiresApproval = false
+    override val requiresApproval = true
 
     override suspend fun execute(params: JsonObject): ToolResult {
         val filePath = params["file_path"]?.jsonPrimitive?.contentOrNull

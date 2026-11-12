@@ -146,7 +146,7 @@ Requires accessibility permission enabled in system settings."""
 
 /**
  * Separate read-only tool for reading screen content.
- * AUTO policy — Gemini can freely read what's on screen without approval.
+ * Screen content is sensitive and requires explicit approval before execution.
  */
 class ScreenReadTool @Inject constructor(
     @ApplicationContext private val context: Context
@@ -160,7 +160,7 @@ Use this to understand what's on screen before deciding what action to take."""
             "wait_ms" to ParameterProperty("integer", "Optional delay in ms before reading (useful after screen transitions, default 0)")
         )
     )
-    override val requiresApproval = false
+    override val requiresApproval = true
 
     override suspend fun execute(params: JsonObject): ToolResult {
         return try {

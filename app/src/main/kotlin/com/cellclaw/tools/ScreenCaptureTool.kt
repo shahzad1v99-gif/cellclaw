@@ -25,7 +25,7 @@ Use vision.analyze to analyze the screenshot content with AI."""
             "include_base64" to ParameterProperty("boolean", "If true, include base64-encoded image data in the response (default false)")
         )
     )
-    override val requiresApproval = false
+    override val requiresApproval = true
 
     override suspend fun execute(params: JsonObject): ToolResult {
         return try {
