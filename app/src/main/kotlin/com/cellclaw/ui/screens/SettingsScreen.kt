@@ -47,6 +47,9 @@ fun SettingsScreen(
     val overlayEnabled by viewModel.overlayEnabled.collectAsState()
     val maxIterations by viewModel.maxIterations.collectAsState()
     val wakeWordEnabled by viewModel.wakeWordEnabled.collectAsState()
+    val masterPower by viewModel.masterPower.collectAsState()
+    val screenAccess by viewModel.screenAccess.collectAsState()
+    val backgroundVoice by viewModel.backgroundVoice.collectAsState()
     val context = LocalContext.current
 
     Scaffold(
@@ -238,6 +241,89 @@ fun SettingsScreen(
                                 Text("Save")
                             }
                         }
+                    }
+                }
+            }
+
+            // Privacy controls
+            Text("Privacy Controls", style = MaterialTheme.typography.titleMedium)
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Master Power")
+                            Text(
+                                "OFF blocks agent execution, screen access, and background voice.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = masterPower,
+                            onCheckedChange = { enabled ->
+                                viewModel.setMasterPower(enabled)
+                                if (!enabled) {
+                                    context.stopService(Intent(context, WakeWordService::class.java))
+                                    context.stopService(Intent(context, OverlayService::class.java))
+                                }
+                            }
+                        )
+                    }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Screen Access")
+                            Text(
+                                "Required before Accessibility reads, screenshots, or screen automation.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = screenAccess,
+                            enabled = masterPower,
+                            onCheckedChange = { viewModel.setScreenAccess(it) }
+                        )
+                    }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Background Voice")
+                            Text(
+                                "Allows the native foreground wake-word service to use the microphone.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = backgroundVoice,
+                            enabled = masterPower,
+                            onCheckedChange = { enabled ->
+                                viewModel.setBackgroundVoice(enabled)
+                                viewModel.setWakeWordEnabled(enabled)
+                                if (enabled) {
+                                    context.startForegroundService(
+                                        Intent(context, WakeWordService::class.java).apply {
+                                            action = WakeWordService.ACTION_START
+                                        }
+                                    )
+                                } else {
+                                    context.stopService(Intent(context, WakeWordService::class.java))
+                                }
+                            }
+                        )
                     }
                 }
             }

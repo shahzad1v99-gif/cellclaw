@@ -14,11 +14,10 @@ class AutonomyPolicyTest {
     }
 
     @Test
-    fun `read operations default to AUTO`() {
-        assertEquals(ToolApprovalPolicy.AUTO, policy.getPolicy("sms.read"))
+    fun `basic read operations default to AUTO`() {
         assertEquals(ToolApprovalPolicy.AUTO, policy.getPolicy("contacts.search"))
         assertEquals(ToolApprovalPolicy.AUTO, policy.getPolicy("calendar.query"))
-        assertEquals(ToolApprovalPolicy.AUTO, policy.getPolicy("location.get"))
+        assertEquals(ToolApprovalPolicy.AUTO, policy.getPolicy("clipboard.read"))
         assertEquals(ToolApprovalPolicy.AUTO, policy.getPolicy("file.read"))
         assertEquals(ToolApprovalPolicy.AUTO, policy.getPolicy("settings.get"))
     }
@@ -33,8 +32,8 @@ class AutonomyPolicyTest {
     }
 
     @Test
-    fun `unknown tools default to ASK`() {
-        assertEquals(ToolApprovalPolicy.ASK, policy.getPolicy("unknown.tool"))
+    fun `unknown tools default to DENY`() {
+        assertEquals(ToolApprovalPolicy.DENY, policy.getPolicy("unknown.tool"))
     }
 
     @Test

@@ -35,6 +35,12 @@ class CellClawAccessibility : AccessibilityService() {
             val resultReceiver = intent.getParcelableExtra<ResultReceiver>("result_receiver")
             val action = intent.getStringExtra("action") ?: return
 
+            val prefs = context.getSharedPreferences("cellclaw_config", Context.MODE_PRIVATE)
+            if (!prefs.getBoolean("master_power", true) || !prefs.getBoolean("screen_access", false)) {
+                sendResult(resultReceiver, buildJsonObject { put("error", "Screen Access is OFF") })
+                return
+            }
+
             Log.d(TAG, "Received action: $action")
 
             val result = when (action) {

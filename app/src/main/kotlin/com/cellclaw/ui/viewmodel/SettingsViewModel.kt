@@ -58,6 +58,12 @@ class SettingsViewModel @Inject constructor(
 
     private val _wakeWordEnabled = MutableStateFlow(appConfig.wakeWordEnabled)
     val wakeWordEnabled: StateFlow<Boolean> = _wakeWordEnabled.asStateFlow()
+    private val _masterPower = MutableStateFlow(appConfig.masterPower)
+    val masterPower: StateFlow<Boolean> = _masterPower.asStateFlow()
+    private val _screenAccess = MutableStateFlow(appConfig.screenAccess)
+    val screenAccess: StateFlow<Boolean> = _screenAccess.asStateFlow()
+    private val _backgroundVoice = MutableStateFlow(appConfig.backgroundVoice)
+    val backgroundVoice: StateFlow<Boolean> = _backgroundVoice.asStateFlow()
 
     private val _availableModels = MutableStateFlow(modelsForProvider(_activeProvider.value))
     val availableModels: StateFlow<List<String>> = _availableModels.asStateFlow()
@@ -127,6 +133,26 @@ class SettingsViewModel @Inject constructor(
     fun setWakeWordEnabled(enabled: Boolean) {
         appConfig.wakeWordEnabled = enabled
         _wakeWordEnabled.value = enabled
+    }
+    fun setMasterPower(enabled: Boolean) {
+        appConfig.masterPower = enabled
+        if (!enabled) {
+            appConfig.screenAccess = false
+            appConfig.backgroundVoice = false
+            _screenAccess.value = false
+            _backgroundVoice.value = false
+        }
+        _masterPower.value = enabled
+    }
+    fun setScreenAccess(enabled: Boolean) {
+        val value = enabled && _masterPower.value
+        appConfig.screenAccess = value
+        _screenAccess.value = value
+    }
+    fun setBackgroundVoice(enabled: Boolean) {
+        val value = enabled && _masterPower.value
+        appConfig.backgroundVoice = value
+        _backgroundVoice.value = value
     }
 
     fun setPermissionProfile(profile: PermissionProfile) {

@@ -18,6 +18,7 @@ import androidx.core.app.NotificationCompat
 import com.cellclaw.CellClawApp
 import com.cellclaw.R
 import com.cellclaw.agent.AgentLoop
+import com.cellclaw.config.PrivacyGate
 import com.cellclaw.ui.MainActivity
 import com.cellclaw.voice.VoiceManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,6 +40,7 @@ class WakeWordService : Service() {
     @Inject lateinit var wakeWordDetector: WakeWordDetector
     @Inject lateinit var voiceManager: VoiceManager
     @Inject lateinit var agentLoop: AgentLoop
+    @Inject lateinit var privacyGate: PrivacyGate
 
     private var wakeLock: PowerManager.WakeLock? = null
     private var serviceScope: CoroutineScope? = null
@@ -54,6 +56,11 @@ class WakeWordService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
+                if (!privacyGate.canUseBackgroundVoice()) {
+                    Log.w(TAG, "Background Voice blocked by privacy gate")
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
                 startForeground(NOTIFICATION_ID, buildNotification("Listening for wake word..."))
                 startDetection()
             }

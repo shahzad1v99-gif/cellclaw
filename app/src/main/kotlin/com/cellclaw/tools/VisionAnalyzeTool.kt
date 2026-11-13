@@ -2,6 +2,7 @@ package com.cellclaw.tools
 
 import android.util.Base64
 import com.cellclaw.provider.*
+import com.cellclaw.config.PrivacyGate
 import dagger.hilt.android.qualifiers.ApplicationContext
 import android.content.Context
 import kotlinx.serialization.json.*
@@ -10,7 +11,8 @@ import javax.inject.Inject
 
 class VisionAnalyzeTool @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val providerManager: ProviderManager
+    private val providerManager: ProviderManager,
+    private val privacyGate: PrivacyGate
 ) : Tool {
     override val name = "vision.analyze"
     override val description = """Analyze an image using AI vision capabilities.
@@ -27,6 +29,9 @@ Useful for understanding screenshots, photos, or any visual content."""
     override val requiresApproval = true
 
     override suspend fun execute(params: JsonObject): ToolResult {
+        if (!privacyGate.canUseScreen()) {
+            return ToolResult.error("Screen Access is OFF")
+        }
         val filePath = params["file_path"]?.jsonPrimitive?.contentOrNull
             ?: return ToolResult.error("Missing 'file_path' parameter")
         val question = params["question"]?.jsonPrimitive?.contentOrNull

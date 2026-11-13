@@ -15,6 +15,7 @@ import com.cellclaw.agent.AgentState
 import com.cellclaw.agent.HeartbeatManager
 import com.cellclaw.agent.HeartbeatState
 import com.cellclaw.approval.ApprovalQueue
+import com.cellclaw.config.PrivacyGate
 import com.cellclaw.service.receivers.NotificationActionReceiver
 import com.cellclaw.ui.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
@@ -28,6 +29,7 @@ class CellClawService : Service() {
     @Inject lateinit var agentLoop: AgentLoop
     @Inject lateinit var approvalQueue: ApprovalQueue
     @Inject lateinit var heartbeatManager: HeartbeatManager
+    @Inject lateinit var privacyGate: PrivacyGate
 
     private var wakeLock: PowerManager.WakeLock? = null
     private var serviceScope: CoroutineScope? = null
@@ -42,6 +44,10 @@ class CellClawService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
+                if (!privacyGate.masterPower) {
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
                 startForeground(NOTIFICATION_ID, buildNotification("CellClaw is running", AgentState.IDLE, false, HeartbeatState.STOPPED, null))
                 agentLoop.loadHistory()
                 observeState()

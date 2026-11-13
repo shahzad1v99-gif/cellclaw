@@ -5,10 +5,12 @@ import com.cellclaw.approval.ApprovalQueue
 import com.cellclaw.approval.ApprovalRequest
 import com.cellclaw.approval.ApprovalResult
 import com.cellclaw.config.AppConfig
+import com.cellclaw.config.PrivacyGate
 import com.cellclaw.config.Identity
 import com.cellclaw.memory.ConversationStore
 import com.cellclaw.provider.*
 import com.cellclaw.provider.ProviderManager
+import com.cellclaw.tools.Tool
 import com.cellclaw.tools.ToolRegistry
 import com.cellclaw.tools.ToolResult
 import kotlinx.coroutines.*
@@ -28,6 +30,7 @@ class AgentLoop @Inject constructor(
     private val identity: Identity,
     private val autonomyPolicy: AutonomyPolicy,
     private val appConfig: AppConfig,
+    private val privacyGate: PrivacyGate,
     private val heartbeatManagerProvider: Provider<HeartbeatManager>
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -44,6 +47,11 @@ class AgentLoop @Inject constructor(
     private var isHeartbeatRun = false
 
     fun submitMessage(text: String) {
+        if (!privacyGate.masterPower) {
+            _state.value = AgentState.ERROR
+            scope.launch { _events.emit(AgentEvent.Error("Master Power is OFF")) }
+            return
+        }
         currentJob?.cancel()
         currentJob = scope.launch {
             try {
@@ -260,6 +268,8 @@ class AgentLoop @Inject constructor(
 
     private suspend fun checkApproval(tool: Tool, params: JsonObject): Boolean {
         val toolName = tool.name
+        if (!privacyGate.masterPower) return false
+        if (toolName in SCREEN_TOOLS && !privacyGate.canUseScreen()) return false
         val policy = autonomyPolicy.getPolicy(toolName)
         if (policy == ToolApprovalPolicy.DENY) return false
         if (tool.requiresApproval) return requestApproval(toolName, params)
@@ -294,6 +304,7 @@ class AgentLoop @Inject constructor(
 
     companion object {
         private const val TAG = "AgentLoop"
+        private val SCREEN_TOOLS = setOf("screen.read", "screen.capture", "vision.analyze", "app.automate")
     }
 }
 

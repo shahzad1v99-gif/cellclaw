@@ -6,6 +6,7 @@ import android.util.Base64
 import com.cellclaw.service.AccessibilityBridge
 import com.cellclaw.service.CellClawAccessibility
 import com.cellclaw.service.overlay.OverlayVisibilityController
+import com.cellclaw.config.PrivacyGate
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.*
@@ -14,7 +15,8 @@ import javax.inject.Inject
 
 class ScreenCaptureTool @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val overlayVisibility: OverlayVisibilityController
+    private val overlayVisibility: OverlayVisibilityController,
+    private val privacyGate: PrivacyGate
 ) : Tool {
     override val name = "screen.capture"
     override val description = """Capture a screenshot of the current screen.
@@ -28,6 +30,9 @@ Use vision.analyze to analyze the screenshot content with AI."""
     override val requiresApproval = true
 
     override suspend fun execute(params: JsonObject): ToolResult {
+        if (!privacyGate.canUseScreen()) {
+            return ToolResult.error("Screen Access is OFF")
+        }
         return try {
             val includeBase64 = params["include_base64"]?.jsonPrimitive?.booleanOrNull ?: false
 

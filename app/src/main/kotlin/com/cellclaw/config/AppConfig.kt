@@ -49,6 +49,18 @@ class AppConfig @Inject constructor(
         get() = prefs.getBoolean("auto_speak_responses", false)
         set(value) = prefs.edit().putBoolean("auto_speak_responses", value).apply()
 
+    var masterPower: Boolean
+        get() = prefs.getBoolean("master_power", true)
+        set(value) = prefs.edit().putBoolean("master_power", value).apply()
+
+    var screenAccess: Boolean
+        get() = prefs.getBoolean("screen_access", false)
+        set(value) = prefs.edit().putBoolean("screen_access", value).apply()
+
+    var backgroundVoice: Boolean
+        get() = prefs.getBoolean("background_voice", false)
+        set(value) = prefs.edit().putBoolean("background_voice", value).apply()
+
     var overlayEnabled: Boolean
         get() = prefs.getBoolean("overlay_enabled", false)
         set(value) = prefs.edit().putBoolean("overlay_enabled", value).apply()

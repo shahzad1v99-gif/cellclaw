@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import com.cellclaw.service.AccessibilityBridge
 import com.cellclaw.service.CellClawAccessibility
 import com.cellclaw.service.overlay.OverlayVisibilityController
+import com.cellclaw.config.PrivacyGate
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.*
@@ -86,7 +87,8 @@ class AppLaunchTool @Inject constructor(
 
 class AppAutomateTool @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val overlayVisibility: OverlayVisibilityController
+    private val overlayVisibility: OverlayVisibilityController,
+    private val privacyGate: PrivacyGate
 ) : Tool {
     override val name = "app.automate"
     override val description = """Automate actions in other apps using AccessibilityService.
@@ -107,6 +109,9 @@ Requires accessibility permission enabled in system settings."""
     override val requiresApproval = true
 
     override suspend fun execute(params: JsonObject): ToolResult {
+        if (!privacyGate.canUseScreen()) {
+            return ToolResult.error("Screen Access is OFF")
+        }
         val action = params["action"]?.jsonPrimitive?.content
             ?: return ToolResult.error("Missing 'action' parameter")
 
@@ -149,7 +154,8 @@ Requires accessibility permission enabled in system settings."""
  * Screen content is sensitive and requires explicit approval before execution.
  */
 class ScreenReadTool @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val privacyGate: PrivacyGate
 ) : Tool {
     override val name = "screen.read"
     override val description = """Read the current screen content of whatever app is in the foreground.
@@ -163,6 +169,9 @@ Use this to understand what's on screen before deciding what action to take."""
     override val requiresApproval = true
 
     override suspend fun execute(params: JsonObject): ToolResult {
+        if (!privacyGate.canUseScreen()) {
+            return ToolResult.error("Screen Access is OFF")
+        }
         return try {
             val (receiver, deferred) = AccessibilityBridge.createReceiver()
             val waitMs = params["wait_ms"]?.jsonPrimitive?.longOrNull ?: 0
